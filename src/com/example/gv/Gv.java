@@ -24,24 +24,29 @@ public class Gv extends View{
 	private int down;
 	
 	private int maxY=160;
-	private float maxX=160;   //x锟斤拷锟斤拷锟斤拷锟绞撅拷锟斤拷锟斤拷值
+	private float maxX=160;   //x轴最大显示数字
 	private int minY=40;
 	
 	private final int lengthY=200;
 	private final int lengthX=230;
 	
-	private float pointMaxY;   //Y锟斤拷锟斤拷锟斤拷锟斤拷锟绞碉拷锟斤拷锟�
-	private float iy;   //Y锟斤拷潭鹊锟斤拷锟襟长度ｏ拷锟斤拷0-锟斤拷锟街碉拷锟斤拷锟绞碉拷锟斤拷锟�
-	private float ix;   //X锟斤拷潭鹊锟斤拷锟襟长度ｏ拷锟斤拷0-锟斤拷锟街碉拷锟斤拷锟绞碉拷锟斤拷锟�
-	private int mCalibrateX;   //x锟斤拷潭锟斤拷锟�
-	private Date minDate;   //x锟斤拷锟斤拷小锟斤拷锟斤拷锟节ｏ拷锟斤拷锟斤拷锟叫的第硷拷锟斤拷
+	private float pointMaxY;   //Y轴最大点的真实坐标
+	private float iy;   //Y轴最大点的到原点的真是距离
+	private float ix;   //X轴最大点的到原点的真是距离
+	private int mCalibrateX;   //x刻度数量
+	private Date minDate;   //x最小日期时间
 	
 	private List<Point>points;
 	
 	private Canvas canvas;
 	private Paint paint;     //设置绘制的折线画笔
+	private Paint paintXY=new Paint();     //设置绘制的坐标轴
 	
 	private String showDateFormat="MM-dd";
+	
+	private final float calibrate=5;    //刻度长度
+	private final float radiu=2;    //直线小点半径
+	
 	public Gv(Context context) {
 		super(context, null);
 	}
@@ -84,6 +89,12 @@ public class Gv extends View{
 		
 	}
 	
+	public void setPaintXY(int color){
+		if(paintXY==null){
+			paintXY=new Paint();
+		}
+		paintXY.setColor(color);
+	}
 	
 	@SuppressLint("SimpleDateFormat")
 	private Date getDateByString(String dateText,String format){
@@ -91,7 +102,6 @@ public class Gv extends View{
 		try {
 			return simpleDateFormat.parse(dateText);
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
@@ -110,43 +120,47 @@ public class Gv extends View{
 		this.down=down;
 	}
 	private void drawY(Canvas canvas){
-		Paint paint=new Paint();
-		paint.setColor(Color.BLACK);
-		canvas.drawLine(left, top, left, top+lengthY, paint);
+		int height = getHeight();
+		int stopY=top+lengthY;
+		if(stopY>height||stopY+down>height){
+			stopY=height-down;
+		}
+		canvas.drawLine(left, top, left, stopY, paintXY);
 	}
 	
 	private void drawX(Canvas canvas){
-		Paint paint=new Paint();
-		paint.setColor(Color.BLACK);
-		//锟斤拷x锟斤拷
-		canvas.drawLine(left-20, top+lengthY, left+lengthX, top+lengthY, paint);
+		//获取控件宽度
+		int width = getWidth();
+		int stopX=left+lengthX;
+		if(stopX>width||stopX+right>width){
+			stopX=width-right;    
+		}
+		canvas.drawLine(left, top+lengthY, stopX, top+lengthY, paintXY);
 	}
 	
 	
-	//锟斤拷Y锟教讹拷
+	//绘制Y轴刻度
 	private void drawCalibrateY(Canvas canvas){
-		Paint paint=new Paint();
-		paint.setColor(Color.BLACK);
-		final int calibrate=4;   //锟教度碉拷锟斤拷锟斤拷
+		paintXY.setTextSize(10);
+		final int calibrate=4;   //刻度数量
 		int mod=(maxY-minY)/(calibrate-1);
-		int dy=Math.abs((lengthY-lengthY/calibrate)/calibrate);//锟斤拷锟�
+		int dy=Math.abs((lengthY-lengthY/calibrate)/calibrate);//取整
 		this.pointMaxY=top+lengthY-calibrate*dy;
 		iy=calibrate*dy;
 		for(int i=calibrate;i>0;i--){
 			int dx=top+lengthY-(i*dy);
-			//锟斤拷Y锟教讹拷
-			canvas.drawLine(left-20, dx, left, dx, paint);
-			canvas.drawText(mod*i+"", 5, dx+5, paint);
+			//绘制刻度
+			canvas.drawLine(left-calibrate, dx, left, dx, paintXY);
+			
+			String calibrateY=mod*i+"";
+			canvas.drawText(calibrateY, left-calibrate-calibrateY.length()*8, dx+5, paintXY);
 		}
 	}
 	
-	//锟斤拷锟教讹拷
+	//绘制X轴刻度
 	private void drawCalibrateX(Canvas canvas){
-		Paint paint=new Paint();
-		paint.setColor(Color.BLACK);
-		paint.setTextSize(10);
 		mCalibrateX = 7;
-		int dx=Math.abs(lengthX/mCalibrateX);//锟斤拷锟�
+		int dx=Math.abs(lengthX/mCalibrateX);//取整
 		Date date = new Date();    //当前时间
 		Calendar calendar=Calendar.getInstance();
 		calendar.setTime(date);
@@ -171,8 +185,8 @@ public class Gv extends View{
 			calendar.setTime(date);
 			calendar.add(Calendar.DAY_OF_MONTH,i-mCalibrateX );
 			String dateFormat = getDateFormat(calendar.getTime(),showDateFormat);
-			canvas.drawLine(left+dx*i, top+lengthY,left+dx*i , top+lengthY+20, paint);
-			canvas.drawText(dateFormat, left+dx*i-dateFormat.length()*3, top+lengthY+30, paint);
+			canvas.drawLine(left+dx*i, top+lengthY,left+dx*i , top+lengthY+calibrate, paintXY);
+			canvas.drawText(dateFormat, left+dx*i-dateFormat.length()*3, top+lengthY+calibrate*3, paintXY);
 		}
 	}
 	
@@ -192,6 +206,9 @@ public class Gv extends View{
 	 * @param value
 	 */
 	private void drawPoint(){
+		if(points==null){
+			return ;
+		}
 		Calendar calendar=Calendar.getInstance();
 		float startX=0;
 		float startY=0;
@@ -214,7 +231,7 @@ public class Gv extends View{
 			
 			pointX=left+ix*dx/maxX;    //x轴坐标点
 			pointY=pointMaxY+iy-iy*point.getY()/maxY;
-			canvas.drawCircle(pointX, pointY, 3, paint);
+			canvas.drawCircle(pointX, pointY, radiu, paint);
 			
 			if(x!=0){
 				canvas.drawLine(startX, startY,pointX , pointY, paint);
