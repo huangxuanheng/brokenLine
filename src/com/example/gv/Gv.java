@@ -181,7 +181,7 @@ public class Gv extends View{
 		ix=dx*mCalibrateX;
 		
 		for(int i=1;i<=mCalibrateX;i++){
-			//锟斤拷X锟教讹拷
+			//设置为当前时间
 			calendar.setTime(date);
 			calendar.add(Calendar.DAY_OF_MONTH,i-mCalibrateX );
 			String dateFormat = getDateFormat(calendar.getTime(),showDateFormat);
@@ -226,7 +226,7 @@ public class Gv extends View{
 			long millis =calendar.getTimeInMillis();
 			calendar.setTime(minDate);
 			long timeInMillis =calendar.getTimeInMillis();
-			float dx=getDif(millis,timeInMillis);   //锟斤拷锟斤拷锟斤拷锟斤拷跃锟斤拷锟�
+			float dx=getDif(millis,timeInMillis);   //获取两个时间差：单位（天）
 			
 			
 			pointX=left+ix*dx/maxX;    //x轴坐标点
